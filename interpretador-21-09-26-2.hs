@@ -84,6 +84,7 @@ evalExpr :: FunEnv -> Env -> Expr -> IO Value
 evalExpr fenv env expr = case expr of
 
   Lit  n -> return (VInt n)
+  FLit f -> return (VFloat f)
   BLit b -> return (VBool b)
 
   Var x  -> case Map.lookup x env of
