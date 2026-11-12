@@ -14,6 +14,7 @@ import System.IO.Silently (capture_)
 data Type
   = TInt
   | TBool
+  | TFloat  -- Tipo Float 
   | TVoid
   | TArray Type  -- [Antônio Guedes] Adicionado tipo Array
   deriving (Show, Eq)
@@ -26,6 +27,7 @@ data BinOp
 
 data Expr
   = Lit   Int
+  | FLit  Float 
   | BLit  Bool
   | Var   String
   | BinE  BinOp Expr Expr
@@ -60,6 +62,7 @@ data FunDecl = FunDecl
 
 data Value
   = VInt  Int
+  | VFloat  Float 
   | VBool Bool
   | VVoid
   | VArray [Value]  -- [Antônio Guedes] Representação do Array na memória
@@ -146,6 +149,9 @@ evalExpr fenv env expr = case expr of
 
 evalBinOp :: BinOp -> Value -> Value -> Value
 evalBinOp Add (VInt  a) (VInt  b) = VInt  (a + b)
+evalBinOp Add (VFloat a) (VInt b) = VFloat (a + b)      
+evalBinOp Add (VInt a) (VFloat b)  = VFloat (a + b)
+evalBinOp Add (VFloat a) (VFloat b)  = VFloat (a + b)
 evalBinOp Sub (VInt  a) (VInt  b) = VInt  (a - b)
 evalBinOp Mul (VInt  a) (VInt  b) = VInt  (a * b)
 evalBinOp Div (VInt  a) (VInt  b) = VInt  (a `div` b)
