@@ -14,7 +14,7 @@ import System.IO.Silently (capture_)
 data Type
   = TInt
   | TBool
-  | TFloat  -- Tipo Float 
+  | TFloat  -- [Nicolas Justo] adicionado tipo Float 
   | TVoid
   | TArray Type  -- [Antônio Guedes] Adicionado tipo Array
   deriving (Show, Eq)
@@ -27,7 +27,7 @@ data BinOp
 
 data Expr
   = Lit   Int
-  | FLit  Float 
+  | FLit  Float              --[Nicolas Justo] adicionado literal float
   | BLit  Bool
   | Var   String
   | BinE  BinOp Expr Expr
@@ -62,7 +62,7 @@ data FunDecl = FunDecl
 
 data Value
   = VInt  Int
-  | VFloat  Float 
+  | VFloat  Float -- [Nicolas Justo] valor Float em runtime
   | VBool Bool
   | VVoid
   | VArray [Value]  -- [Antônio Guedes] Representação do Array na memória
@@ -84,7 +84,7 @@ evalExpr :: FunEnv -> Env -> Expr -> IO Value
 evalExpr fenv env expr = case expr of
 
   Lit  n -> return (VInt n)
-  FLit f -> return (VFloat f)
+  FLit f -> return (VFloat f) -- [Nicolas Justo] Literal float vira VFloat
   BLit b -> return (VBool b)
 
   Var x  -> case Map.lookup x env of
@@ -150,7 +150,7 @@ evalExpr fenv env expr = case expr of
 -- ============================================================
 
 evalBinOp :: BinOp -> Value -> Value -> Value
-
+-- ===== [Nicolas Justo] Aritmética com promoção Int ↔ Float =====
 evalBinOp Add (VInt a)   (VInt b)   = VInt   (a + b)
 evalBinOp Add (VInt a)   (VFloat b) = VFloat (fromIntegral a + b)
 evalBinOp Add (VFloat a) (VInt b)   = VFloat (a + fromIntegral b)
@@ -166,6 +166,7 @@ evalBinOp Mul (VInt a)   (VFloat b) = VFloat (fromIntegral a * b)
 evalBinOp Mul (VFloat a) (VInt b)   = VFloat (a * fromIntegral b)
 evalBinOp Mul (VFloat a) (VFloat b) = VFloat (a * b)
 
+-- ===== [Nicolas Justo] Divisão: div para Int/Int, / quando há Float =====
 evalBinOp Div (VInt a)   (VInt b)   = VInt   (a `div` b)
 evalBinOp Div (VInt a)   (VFloat b) = VFloat (fromIntegral a / b)
 evalBinOp Div (VFloat a) (VInt b)   = VFloat (a / fromIntegral b)
@@ -176,6 +177,7 @@ evalBinOp Mod (VInt a) (VInt b) = VInt (a `mod` b)
 evalBinOp Eq  va vb = VBool (va == vb)
 evalBinOp Neq va vb = VBool (va /= vb)
 
+-- ===== [Nicolas Justo] Comparações com promoção Int ↔ Float =====
 evalBinOp Lt (VInt a)   (VInt b)   = VBool (a < b)
 evalBinOp Lt (VInt a)   (VFloat b) = VBool (fromIntegral a < b)
 evalBinOp Lt (VFloat a) (VInt b)   = VBool (a < fromIntegral b)
@@ -307,7 +309,7 @@ execBlock fenv env (s:ss) = do
 
 showValue :: Value -> String
 showValue (VInt  n)   = show n
-showValue (VFloat f)  = show f
+showValue (VFloat f)  = show f -- [Nicolas Justo] exibe o float como String
 showValue (VBool b)   = if b then "verdadeiro" else "falso"
 showValue VVoid       = "()"
 showValue (VArray arr)= "[" ++ unwords (map showValue arr) ++ "]" -- [Antônio Guedes] Exibe os elementos
@@ -359,10 +361,52 @@ testForLoop = TestCase $ do
   v <- runProg Map.empty progFor
   assertEqual "for soma 0+1+2" (VInt 3) v
 
+--[Nicolas Justo] Promoção Int → Float na soma: 10 + 2.5 deve virar 12.5 (Float)
+testFloatSoma :: Test
+testFloatSoma = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Add (Lit 10) (FLit 2.5)))
+  assertEqual "10 + 2.5 = 12.5" (VFloat 12.5) v
+
+-- [Nicolas Justo]Promoção Float → Int na subtração: 10.0 - 3 deve virar 7.0 (Float)
+testFloatSub :: Test
+testFloatSub = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Sub (FLit 10.0) (Lit 3)))
+  assertEqual "10.0 - 3 = 7.0" (VFloat 7.0) v
+
+--[Nicolas Justo] Promoção Int → Float na multiplicação: 2.5 * 4 deve virar 10.0 (Float)
+testFloatMul :: Test
+testFloatMul = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Mul (FLit 2.5) (Lit 4)))
+  assertEqual "2.5 * 4 = 10.0" (VFloat 10.0) v
+
+--[Nicolas Justo] Divisão inteira: 7 / 2 usa `div` e devolve Int (3), não Float
+testDivInt :: Test
+testDivInt = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Div (Lit 7) (Lit 2)))
+  assertEqual "7 div 2 = 3" (VInt 3) v
+
+--[Nicolas Justo] Divisão real: 7.0 / 2 usa `/` (há Float) e devolve Float (3.5)
+testDivFloat :: Test
+testDivFloat = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Div (FLit 7.0) (Lit 2)))
+  assertEqual "7.0 / 2 = 3.5" (VFloat 3.5) v
+
+--[Nicolas Justo] Comparação com promoção: 1.5 < 2 deve comparar como Float e devolver True
+testFloatLt :: Test
+testFloatLt = TestCase $ do
+  v <- runProg Map.empty (Return (BinE Lt (FLit 1.5) (Lit 2)))
+  assertEqual "1.5 < 2 = True" (VBool True) v
+
 suite :: Test
 suite = TestList
   [ TestLabel "teste de manipulacao de array" testArray
   , TestLabel "teste de laco for"             testForLoop
+  , TestLabel "float soma"         testFloatSoma
+  , TestLabel "float sub"          testFloatSub
+  , TestLabel "float mul"          testFloatMul
+  , TestLabel "div int"            testDivInt
+  , TestLabel "div float"          testDivFloat
+  , TestLabel "float lt"           testFloatLt
   ]
 
 main :: IO ()
