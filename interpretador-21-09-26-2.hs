@@ -152,18 +152,53 @@ evalBinOp Add (VInt  a) (VInt  b) = VInt  (a + b)
 evalBinOp Add (VFloat a) (VInt b) = VFloat (a + b)      
 evalBinOp Add (VInt a) (VFloat b)  = VFloat (a + b)
 evalBinOp Add (VFloat a) (VFloat b)  = VFloat (a + b)
+
 evalBinOp Sub (VInt  a) (VInt  b) = VInt  (a - b)
+evalBinOp Sub (VInt  a) (VFloat  b)   = VFloat  (a - b)
+evalBinOp Sub (VFloat  a) (VInt  b)   = VFloat  (a - b)
+evalBinOp Sub (VFloat  a) (VFloat  b) = VFloat  (a - b)
+
 evalBinOp Mul (VInt  a) (VInt  b) = VInt  (a * b)
+evalBinOp Mul (VFloat  a) (VInt  b) = VFloat  (a * b)
+evalBinOp Mul (VInt  a) (VFloat  b) = VFloat  (a * b)
+evalBinOp Mul (VFloat  a) (VFloat  b) = VFloat  (a * b)
+
 evalBinOp Div (VInt  a) (VInt  b) = VInt  (a `div` b)
+evalBinOp Div (VFloat  a) (VInt  b) = VFloat  (a / b)
+evalBinOp Div (VInt  a) (VFloat  b) = VFloat  (a / b)
+evalBinOp Div (VFloat  a) (VFloat  b) = VFloat  (a / b)
+
 evalBinOp Mod (VInt  a) (VInt  b) = VInt  (a `mod` b)
+evalBinOp Mod (VFloat  a) (VInt  b) = VInt  (a `mod` b)
+evalBinOp Mod (VInt  a) (VFloat b) = VInt  (a `mod` b)
+evalBinOp Mod (VFloat  a) (VFloat  b) = VInt  (a `mod` b)
+
 evalBinOp Eq  va        vb        = VBool (va == vb)
 evalBinOp Neq va        vb        = VBool (va /= vb)
+
 evalBinOp Lt  (VInt  a) (VInt  b) = VBool (a <  b)
+evalBinOp Lt  (VFloat  a) (VInt  b) = VBool (a <  b)
+evalBinOp Lt  (VInt  a) (VFloat  b) = VBool (a <  b)
+evalBinOp Lt  (VFloat  a) (VFloat  b) = VBool (a <  b)
+
 evalBinOp Gt  (VInt  a) (VInt  b) = VBool (a >  b)
+evalBinOp Gt  (VFloat  a) (VInt  b) = VBool (a >  b)
+evalBinOp Gt  (VInt  a) (VFloat  b) = VBool (a >  b)
+evalBinOp Gt  (VFloat  a) (VFloat  b) = VBool (a >  b)
+
 evalBinOp Le  (VInt  a) (VInt  b) = VBool (a <= b)
+evalBinOp Le  (VFloat  a) (VInt  b) = VBool (a <= b)
+evalBinOp Le  (VInt  a) (VFloat b) = VBool (a <= b)
+evalBinOp Le  (VFloat  a) (VFloat  b) = VBool (a <= b)
+
 evalBinOp Ge  (VInt  a) (VInt  b) = VBool (a >= b)
+evalBinOp Ge  (VFloat  a) (VInt  b) = VBool (a >= b)
+evalBinOp Ge  (VInt  a) (VFloat  b) = VBool (a >= b)
+evalBinOp Ge  (VFloat  a) (VFloat  b) = VBool (a >= b)
+
 evalBinOp And (VBool a) (VBool b) = VBool (a && b)
 evalBinOp Or  (VBool a) (VBool b) = VBool (a || b)
+
 evalBinOp op  _         _         = error ("Operacao invalida ou tipos incompativeis: " ++ show op)
 
 -- ============================================================
