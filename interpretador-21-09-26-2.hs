@@ -108,6 +108,7 @@ evalExpr fenv env expr = case expr of
     case sizeVal of
       VInt size -> do
         let defVal TInt       = VInt 0
+            defVal TFloat     = VFloat 0.0
             defVal TBool      = VBool False
             defVal TVoid      = VVoid
             defVal (TArray _) = VVoid
