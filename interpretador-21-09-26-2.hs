@@ -309,6 +309,7 @@ execBlock fenv env (s:ss) = do
 
 showValue :: Value -> String
 showValue (VInt  n)   = show n
+showValue (VFloat f)  = show f
 showValue (VBool b)   = if b then "verdadeiro" else "falso"
 showValue VVoid       = "()"
 showValue (VArray arr)= "[" ++ unwords (map showValue arr) ++ "]" -- [Antônio Guedes] Exibe os elementos
